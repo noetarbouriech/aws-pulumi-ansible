@@ -1,0 +1,51 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    s3_bucket: 'your_s3_bucket'
+    s3_file: 'index.html'
+    local_dest: '/var/www/html/index.html'
+
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        upgrade: yes
+        update_cache: yes
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Install unzip
+      apt:
+        name: unzip
+        state: present
+
+    - name: Start Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Download AWS CLI
+      command: curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+    - name: Unzip AWS CLI
+      command: unzip awscliv2.zip
+
+    - name: Install AWS CLI
+      command: /bin/sh /home/ubuntu/aws/install
+      args:
+        chdir: "{{ ansible_env.HOME }}"
+
+    - name: Download file from S3
+      command: aws s3 cp s3://{{ s3_bucket }}/{{ s3_file }} {{ local_dest }}
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+
+    - name: Allow incoming connections on port 80
+      ufw:
+        rule: allow
+        port: '80'

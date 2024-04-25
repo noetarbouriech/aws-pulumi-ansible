@@ -1,0 +1,3 @@
+config:
+  aws-pulumi-ansible:privateKeyPath: /home/noe/.ssh/aws_rsa
+  aws:region: eu-west-3
